@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{_layout/layout}">
+<head>
+  <title>ホーム</title>
+</head>
+<body>
+<div layout:fragment="content" class="container-fluid">
+
+<span th:text="${@mqttConfig.broker.host}"></span>
+<span th:text="${@mqttConfig.broker.port}"></span>
+
+<button id="start" class="btn btn-primary">Start</button>
+<button id="stop" class="btn btn-secondary">Stop</button>
+
+</div><!-- container -->
+<div layout:fragment="script">
+<script type="text/javascript">
+$(function(){
+	$('#start').click(function(){
+		var data = JSON.stringify({
+			code: "xxxx"
+		});
+		$.ajax({
+			url:         '/ajax/start',
+			type:        'POST',
+			data:        data,
+			contentType: 'application/json',
+			dataType:    'json'
+		})
+		.done(function (data) {
+			console.log(data);
+		})
+		.fail(function (data) {
+			console.error(data);
+		});
+		return false;
+	});
+	$('#stop').click(function(){
+		var data = JSON.stringify({
+			code: "xxxx"
+		});
+		$.ajax({
+			url:         '/ajax/stop',
+			type:        'POST',
+			data:        data,
+			contentType: 'application/json',
+			dataType:    'json'
+		})
+		.done(function (data) {
+			console.log(data);
+		})
+		.fail(function (data) {
+			console.error(data);
+		});
+		return false;
+	});
+});
+</script>
+</div><!-- script -->
+</body>
+</html>
