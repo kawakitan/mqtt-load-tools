@@ -9,6 +9,11 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
+/**
+ * MQTTサブスクライブクライアント.
+ *
+ * @author kawakitan
+ */
 @Slf4j
 public class MqttSubscribeClient {
 
@@ -47,7 +52,7 @@ public class MqttSubscribeClient {
                     client.setCallback(new MqttCallback() {
                         @Override
                         public void messageArrived(final String topic, final MqttMessage message) throws Exception {
-                            log.info("Subscribe.");
+                            log.debug("Subscribe.");
                         }
 
                         @Override

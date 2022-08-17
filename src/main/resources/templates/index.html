@@ -10,11 +10,30 @@
 <body>
 <div layout:fragment="content" class="container-fluid">
 
-<span th:text="${@mqttConfig.broker.host}"></span>
-<span th:text="${@mqttConfig.broker.port}"></span>
+<div class="row">
+<div class="col-md-3">
+<span th:text="${@mqttConfig.broker.host}"></span>:<span th:text="${@mqttConfig.broker.port}"></span>
+
+<div class="form-floating mb-3">
+  <input id="thread" type="text" class="form-control" style="text-align: right;" value="1" placeholder="Thread size" />
+  <label for="thread">Thread size</label>
+</div>
+<div class="form-floating mb-3">
+  <input id="interval" type="text" class="form-control" style="text-align: right;" value="1000" placeholder="Publish interval" />
+  <label for="interval">Publish interval</label>
+</div>
+<div class="form-floating mb-3">
+  <input id="length" type="text" class="form-control" style="text-align: right;" value="1k" placeholder="Data length" />
+  <label for="length">Data length</label>
+</div>
 
 <button id="start" class="btn btn-primary">Start</button>
 <button id="stop" class="btn btn-secondary">Stop</button>
+
+</div>
+<div class="col-md-9">
+</div>
+</div>
 
 </div><!-- container -->
 <div layout:fragment="script">
@@ -22,7 +41,9 @@
 $(function(){
 	$('#start').click(function(){
 		var data = JSON.stringify({
-			code: "xxxx"
+			thread:   $('#thread').val(),
+			interval: $('#interval').val(),
+			length:   $('#length').val()
 		});
 		$.ajax({
 			url:         '/ajax/start',

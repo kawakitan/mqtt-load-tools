@@ -1,5 +1,7 @@
 package com.github.kawakitan.mqtt.load.tools;
 
+import java.util.Random;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
@@ -11,6 +13,11 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 
+/**
+ * MQTTパブリッシュクライアント.
+ *
+ * @author kawakitan
+ */
 @Slf4j
 public class MqttPublishClient {
 
@@ -21,6 +28,12 @@ public class MqttPublishClient {
     private Thread thread;
     private boolean stopReqFlag;
 
+    private long interval;
+    private long tsStart;
+    private long tsNext;
+
+    private byte[] data;
+
     public MqttPublishClient(
             final Broker broker,
             final String topic,
@@ -30,17 +43,27 @@ public class MqttPublishClient {
         this.clientId = clientId;
     }
 
+    @Data
+    private static class PublishInfo {
+        private long start;
+        private long end;
+    }
+
     private void loop(final IMqttAsyncClient client) throws MqttException {
-        final MqttMessage message = new MqttMessage(clientId.getBytes());
+        PublishInfo info = new PublishInfo();
+        info.setStart(System.currentTimeMillis());
+
+        final MqttMessage message = new MqttMessage(data);
         message.setQos(2);
 
-        log.info("Publish start.");
-        final IMqttDeliveryToken token = client.publish(topic, message, null, new IMqttActionListener() {
+        // log.info("Publish start.");
+        final IMqttDeliveryToken token = client.publish(topic, message, info, new IMqttActionListener() {
 
             @Override
             public void onSuccess(final IMqttToken asyncActionToken) {
-                // TODO Auto-generated method stub
-                log.info("Publish success.");
+                PublishInfo info = (PublishInfo) asyncActionToken.getUserContext();
+                info.setEnd(System.currentTimeMillis());
+                log.info("Publish success. [{} ms]", (info.end - info.start));
             }
 
             @Override
@@ -50,10 +73,15 @@ public class MqttPublishClient {
         });
     }
 
-    public synchronized void start() {
+    public synchronized void start(final long interval, final int dataLength) {
         if (null != thread) {
             return;
         }
+
+        this.interval = interval;
+        data = new byte[dataLength];
+        Random r = new Random(System.currentTimeMillis());
+        r.nextBytes(data);
 
         stopReqFlag = false;
         thread = new Thread(new Runnable() {
@@ -79,20 +107,25 @@ public class MqttPublishClient {
                         log.debug("Connect wait.");
                     }
 
+                    tsStart = System.currentTimeMillis();
+                    tsNext = tsStart;
                     while (true) {
-                        final long tsStart = System.currentTimeMillis();
                         // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
                         loop(client);
                         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                         if (stopReqFlag) {
                             break;
                         }
-                        final long tsEnd = System.currentTimeMillis();
-                        final long interval = 1000 - (tsEnd - tsStart);
-                        if (0 > interval) {
+
+                        tsNext += interval;
+                        final long tsNow = System.currentTimeMillis();
+                        final long in = tsNext - tsNow;
+
+                        if (0 > in) {
                             log.warn("Over time.");
                         } else {
-                            Thread.sleep(interval);
+                            // log.info("Sleep. {} - {} = {}", tsNext, tsNow, in);
+                            Thread.sleep(in);
                         }
                     }
                 } catch (MqttException ex) {
